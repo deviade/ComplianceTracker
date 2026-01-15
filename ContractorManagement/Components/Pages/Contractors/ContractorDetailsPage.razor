@@ -1,0 +1,104 @@
+﻿@page "/contractors/{Id:int}"
+@rendermode InteractiveServer
+
+@using ContractorManagement.Components.Model
+@using ContractorManagement.Blazor.Services
+@inject IContractorService ContractorService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h3>Contractor Details</h3>
+
+@if (isLoading)
+{
+    <div class="alert alert-info">
+        Loading contractor details...
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @errorMessage
+    </div>
+}
+else if (contractor == null)
+{
+    <div class="alert alert-warning">
+        Contractor not found.
+    </div>
+}
+else
+{
+    <dl class="row">
+        <dt class="col-sm-3">Name</dt>
+        <dd class="col-sm-9">@contractor.Name</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@contractor.Email</dd>
+    </dl>
+
+    <div class="mt-3">
+        <button class="btn btn-secondary me-2"
+                @onclick="GoBack">
+            Back
+        </button>
+
+        <a class="btn btn-warning me-2"
+           href="/contractors/edit/@contractor.Id">
+            Edit
+        </a>
+
+        <button class="btn btn-danger"
+                @onclick="ConfirmDelete">
+            Delete
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ContractorDetails? contractor;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            contractor = await ContractorService.GetContractorByIdAsync(Id);
+        }
+        catch
+        {
+            errorMessage = "Unable to load contractor details.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoBack() => Nav.NavigateTo("/contractors");
+
+    private async Task ConfirmDelete()
+    {
+        if (contractor == null)
+            return;
+
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm", "Are you sure you want to delete this contractor?");
+
+        if (!confirmed)
+            return;
+
+        try
+        {
+            await ContractorService.DeleteContractorAsync(contractor.Id);
+            Nav.NavigateTo("/contractors");
+        }
+        catch
+        {
+            errorMessage = "Failed to delete contractor.";
+        }
+    }
+}

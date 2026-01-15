@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ComplianceTracker.API/ComplianceTracker.API.csproj" />
+  <Project Path="ComplianceTracker.Domain/ComplianceTracker.Domain.csproj" />
+  <Project Path="ComplianceTracker.Infrastructure/ComplianceTracker.Infrastructure.csproj" />
+  <Project Path="ContractorManagement/ContractorManagement.csproj" Id="396a5cb5-9d79-4b26-8ef9-7d14ff60db85" />
+</Solution>

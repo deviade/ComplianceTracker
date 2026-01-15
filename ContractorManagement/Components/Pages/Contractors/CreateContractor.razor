@@ -1,0 +1,53 @@
+﻿@page "/contractors/create"
+@using ContractorManagement.Blazor.Services
+@using static ContractorManagement.Components.Model.ContractorDetails
+@rendermode InteractiveServer
+@inject IContractorService ContractorService
+@inject NavigationManager Nav
+
+<h3>Create Contractor</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="model" OnValidSubmit="Save">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label>Name</label>
+        <InputText class="form-control" @bind-Value="model.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText class="form-control" @bind-Value="model.Email" />
+    </div>
+
+    <button class="btn btn-primary" disabled="@isSaving">Save</button>
+</EditForm>
+
+@code {
+    private CreateContractorDto model = new();
+    private bool isSaving;
+    private string? errorMessage;
+
+    private async Task Save()
+    {
+        try
+        {
+            isSaving = true;
+            await ContractorService.CreateContractorAsync(model);
+            Nav.NavigateTo("/contractors");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}

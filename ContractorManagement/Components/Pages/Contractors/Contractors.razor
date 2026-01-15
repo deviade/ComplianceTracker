@@ -1,0 +1,118 @@
+﻿@page "/contractors"
+@rendermode InteractiveServer
+
+@using ContractorManagement.Components.Model
+@using ContractorManagement.Blazor.Services
+@inject IContractorService ContractorService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h3>Contractors</h3>
+
+<a class="btn btn-success mb-3" href="/contractors/create">
+    + Add Contractor
+</a>
+
+@if (isLoading)
+{
+    <div class="alert alert-info">
+        Loading contractors...
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @errorMessage
+    </div>
+}
+else if (!contractors.Any())
+{
+    <div class="alert alert-warning">
+        No contractors found.
+    </div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th style="width:240px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contractor in contractors)
+            {
+                <tr>
+                    <td>@contractor.Name</td>
+                    <td>@contractor.Email</td>
+                    <td>
+                        <a class="btn btn-sm btn-info me-1"
+                           href="/contractors/@contractor.Id">
+                            View
+                        </a>
+
+                        <a class="btn btn-sm btn-warning me-1"
+                           href="/contractors/edit/@contractor.Id">
+                            Edit
+                        </a>
+
+                        <button class="btn btn-sm btn-danger"
+                                @onclick="() => ConfirmDelete(contractor.Id)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Contractor> contractors = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadContractorsAsync();
+    }
+
+    private async Task LoadContractorsAsync()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            contractors = await ContractorService.GetContractorsAsync();
+        }
+        catch
+        {
+            errorMessage = "Unable to load contractors. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ConfirmDelete(int id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm", "Are you sure you want to delete this contractor?");
+
+        if (!confirmed)
+            return;
+
+        try
+        {
+            await ContractorService.DeleteContractorAsync(id);
+            contractors.RemoveAll(c => c.Id == id);
+        }
+        catch
+        {
+            errorMessage = "Failed to delete contractor.";
+        }
+    }
+}
